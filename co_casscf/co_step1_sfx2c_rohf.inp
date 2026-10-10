@@ -1,13 +1,22 @@
 #
-#  STEP 1 : Co atom, spin-free (scalar) X2C ROHF / dyall-v2z
-#  Purpose: generate physically sensible starting orbitals
-#           (1s..3p core, 3d, 4s) for the 2c/4c CASSCF in step 2.
-#  ROHF quartet, 3d7 4s2. It does NOT have to be tightly converged:
-#  the MOs are written to the .bin file every SCF iteration.
+#  STEP 1 : Co(3+) ion, spin-free (scalar) X2C ROHF / dyall-v2z
+#  Purpose: clean starting orbitals (1s..3p core, 3d, 4s) for the
+#           2c/4c CASSCF on NEUTRAL Co in step 2.
+#
+#  Why Co3+ and not neutral Co: a neutral-atom ROHF started from the
+#  core guess lands on a wrong configuration (4s/4p occupied, 3d6 closed).
+#  Co3+ is 3d6 (5D), quintet; 4s is unoccupied and is the lowest virtual,
+#  so the orbital ordering comes out exactly as the CASSCF needs it:
+#     spatial  1- 9 : 1s 2s 2p 3s 3p   -> spinors  1-18 (inactive)
+#     spatial 10-14 : 3d               -> spinors 19-28 (active)
+#     spatial 15    : 4s (1st virtual) -> spinors 29-30 (active)
+#  CASSCF in step 2 relaxes these orbitals for the neutral atom.
+#
+#  Check in the output: Mulliken S ~ 6.0, P ~ 12.0, D ~ 6.0
 #
 [Molecule]
-charge = 0
-mult = 4
+charge = 3
+mult = 5
 geom:
  Co   0.0   0.0   0.0
 
@@ -20,7 +29,7 @@ job = SCF
 basis = dyall-v2z
 
 [SCF]
-guess    = core       # (SAD falls back to core for a single atom anyway)
+guess    = core
 maxiter  = 300
 damp     = true
 dampparam = 0.5
