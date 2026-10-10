@@ -43,7 +43,6 @@ MaxCIIter    = 200
 # --- analysis prints ---
 NDetPrint    = 10     # leading determinants per state
 PrintConfig  = true   # also print their active-space occupation strings
-PrintSpinAndAngular = true   # <S>, <L>, <J>, <J^2> per state (2c only)
 
 [MISC]
 mem  = 8 GB
