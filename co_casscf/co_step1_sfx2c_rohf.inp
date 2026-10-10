@@ -1,0 +1,35 @@
+#
+#  STEP 1 : Co atom, spin-free (scalar) X2C ROHF / dyall-v2z
+#  Purpose: generate physically sensible starting orbitals
+#           (1s..3p core, 3d, 4s) for the 2c/4c CASSCF in step 2.
+#  ROHF quartet, 3d7 4s2. It does NOT have to be tightly converged:
+#  the MOs are written to the .bin file every SCF iteration.
+#
+[Molecule]
+charge = 0
+mult = 4
+geom:
+ Co   0.0   0.0   0.0
+
+[QM]
+reference = ROHF
+X2CTYPE   = SPINFREE
+job = SCF
+
+[BASIS]
+basis = dyall-v2z
+
+[SCF]
+guess    = core       # (SAD falls back to core for a single atom anyway)
+maxiter  = 300
+damp     = true
+dampparam = 0.5
+diisalg  = CEDIIS
+nkeep    = 12
+
+[INTS]
+alg = incore
+
+[MISC]
+mem  = 8 GB
+nsmp = 8

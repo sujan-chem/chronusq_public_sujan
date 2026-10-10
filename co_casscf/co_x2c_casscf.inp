@@ -1,7 +1,11 @@
 #
-#  Co atom : X2C (two-component) SA-CASSCF / dyall-v2z
+#  STEP 2 : Co atom, X2C (two-component) SA-CASSCF / dyall-v2z
 #  Ground state 3d7 4s2  4F_9/2
 #  Active space: 3d + 4s  -> 6 spatial = 12 spinors, 9 electrons
+#
+#  Starting orbitals are read from the step-1 spin-free ROHF bin file:
+#    chronusq -i co_step1_sfx2c_rohf.inp -o step1.out -b step1.bin
+#    chronusq -i co_x2c_casscf.inp       -o step2.out -b step2.bin -s step1.bin
 #
 [Molecule]
 charge = 0
@@ -17,11 +21,10 @@ job = CI
 basis = dyall-v2z
 
 [SCF]
-# Do NOT try to converge the open-shell 2c-HF (that is what fails).
-# Build orbitals from the SAD guess Fock matrix in one shot and hand
-# them straight to CASSCF, which does the real orbital optimization.
-guess = sad
-alg = skip
+# Do not run the open-shell 2c-HF: take ROHF orbitals (converted to
+# spinors) from step1.bin and go straight to CASSCF.
+guess = readmo
+alg   = skip
 
 [INTS]
 alg = incore
@@ -32,7 +35,7 @@ NACTO     = 12        # spinors (3d x10 + 4s x2)
 NACTE     = 9         # 3d7 4s2
 NRoots    = 28        # all 28 microstates of the 4F term (J = 9/2,7/2,5/2,3/2)
 StateAverage = True   # equal weights -> spherical density, no symmetry breaking
-MaxSCFIter   = 200
+MaxSCFIter   = 300
 SCFEneConv   = 1e-8
 SCFGradConv  = 1e-5
 CIConv       = 1e-8

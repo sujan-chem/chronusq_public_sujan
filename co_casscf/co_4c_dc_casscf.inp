@@ -2,6 +2,9 @@
 #  Co atom : four-component Dirac-Coulomb SA-CASSCF / dyall-v2z
 #  Same active space as the X2C job: CAS(9e, 12 spinors)
 #
+#  Starting orbitals from the step-1 spin-free ROHF bin file:
+#    chronusq -i co_4c_dc_casscf.inp -o co4c.out -b co4c.bin -s step1.bin
+#
 [Molecule]
 charge = 0
 mult = 4
@@ -16,8 +19,8 @@ job = CI
 basis = dyall-v2z
 
 [SCF]
-guess = sad
-alg = skip
+guess = readmo
+alg   = skip
 
 [INTS]
 alg = direct
@@ -32,7 +35,7 @@ NACTO     = 12
 NACTE     = 9
 NRoots    = 28
 StateAverage = True
-MaxSCFIter   = 200
+MaxSCFIter   = 300
 SCFEneConv   = 1e-8
 SCFGradConv  = 1e-5
 CIConv       = 1e-8
