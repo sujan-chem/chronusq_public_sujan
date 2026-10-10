@@ -83,6 +83,7 @@ namespace ChronusQ {
       "SAVEMOINTS",
       "CUBE",
       "NDETPRINT",
+      "PRINTCONFIG",
     };
 
     return CQInvalidKeywords(allowedKeywords, inputSection);
@@ -241,6 +242,8 @@ namespace ChronusQ {
   void HandleDetPrinting(std::ostream & out, CQInputFile & input,
     std::shared_ptr<MCWaveFunctionBase> & mcwf)
   {
+    OPTOPT(mcwf->printDetConfig = input.getData<bool>("MCSCF/PRINTCONFIG"));
+
     std::string DetPrintString;
     OPTOPT(DetPrintString = input.getData<std::string>("MCSCF/NDETPRINT"));
 

@@ -179,8 +179,84 @@ namespace ChronusQ {
        
        // only print k Largerst coefficient
        this->printMCState(std::cout, i, this->StateEnergy->at(i), C, Cindx, NPrintC);  
+       if(this->printDetConfig)
+         this->printMCStateConfigs(std::cout, i, C, Cindx, NPrintC);
     }
   }
+
+  /**
+   *  \brief Print the active-space occupation string of the leading
+   *  determinants of state i (CAS only).
+   *
+   *  2C/4C: one character per active spinor, 1 = occupied, 0 = empty.
+   *  1C   : one character per active orbital, 2 = doubly occupied,
+   *         a = alpha only, b = beta only, 0 = empty.
+   *  Characters are ordered by active MO index; the absolute MO index
+   *  of the first active orbital is printed in the header.
+   */
+  template <typename MatsT, typename IntsT>
+  void MCWaveFunction<MatsT,IntsT>::printMCStateConfigs(std::ostream & out,
+    size_t i, MatsT * C, std::vector<size_t> & sorted_CAddr, size_t N) {
+
+    if( this->MOPartition.scheme != CAS ) {
+      out << "  * PRINTCONFIG: occupation strings only implemented for CAS" << std::endl;
+      return;
+    }
+
+    const size_t nC     = this->reference().nC;
+    const size_t nCorrO = this->MOPartition.nCorrO;
+    const size_t firstAct = this->MOPartition.nNegMO + this->MOPartition.nFCore
+                          + this->MOPartition.nInact + 1;
+
+    if( nC == 1 and not this->detStrBeta ) {
+      out << "  * PRINTCONFIG: occupation strings NYI for 1C high-spin CAS" << std::endl;
+      return;
+    }
+
+    auto addrA   = this->detStr->buildAddressingArray(this->detStr->nElectron(), nCorrO);
+    auto deAddrA = this->detStr->buildDeAddressingArray(addrA);
+    DetStringManager::int_matrix addrB, deAddrB;
+    size_t nStrA = this->detStr->nString();
+    if( nC == 1 ) {
+      addrB   = this->detStrBeta->buildAddressingArray(this->detStrBeta->nElectron(), nCorrO);
+      deAddrB = this->detStrBeta->buildDeAddressingArray(addrB);
+      nStrA   = Comb(nCorrO, this->detStr->nElectron());
+    }
+
+    out << std::endl << "  Leading configurations of state " << i + 1
+        << " (active " << (nC == 1 ? "orbitals " : "spinors ") << firstAct
+        << " - " << firstAct + nCorrO - 1 << ", left to right):" << std::endl;
+    out << "  " << std::setw(6) << "Det" << std::setw(12) << "|C|^2"
+        << std::setw(12) << "Cum." << "   Occupation" << std::endl;
+
+    double cum = 0.;
+    for (auto p = 0ul; p < N; p++) {
+      size_t CAddr = sorted_CAddr[p];
+      std::string occ(nCorrO, '0');
+
+      if( nC == 1 ) {
+        // CI vector is stored alpha-string fastest: addr = Kb * nStrA + Ka
+        size_t Ka = CAddr % nStrA, Kb = CAddr / nStrA;
+        for (auto o : this->detStr->address2DetString(Ka, addrA, deAddrA))  occ[o] = 'a';
+        for (auto o : this->detStrBeta->address2DetString(Kb, addrB, deAddrB))
+          occ[o] = (occ[o] == 'a') ? '2' : 'b';
+      } else {
+        for (auto o : this->detStr->address2DetString(CAddr, addrA, deAddrA)) occ[o] = '1';
+      }
+
+      double w = std::norm(C[CAddr]);
+      cum += w;
+      out << "  " << std::setw(6) << CAddr
+          << std::fixed << std::setprecision(6) << std::setw(12) << w
+          << std::setw(12) << cum << "   ";
+      for (auto k = 0ul; k < nCorrO; k++) {
+        if( k and k % 10 == 0 ) out << ' ';
+        out << occ[k];
+      }
+      out << std::endl;
+    }
+
+  } // MCWaveFunction::printMCStateConfigs
 
   template <typename MatsT, typename IntsT>
   void MCWaveFunction<MatsT,IntsT>::printMCState(std::ostream & out, 

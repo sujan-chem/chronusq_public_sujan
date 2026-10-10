@@ -167,6 +167,7 @@ namespace ChronusQ {
     size_t printRDMs = 0;
     double rdmCut = 0.10;
     size_t NDetPrint = 0;
+    bool printDetConfig = false; ///< Print occupation strings of the leading determinants
 
     MCWaveFunctionBase() = delete;
     MCWaveFunctionBase(const MCWaveFunctionBase &) = default;

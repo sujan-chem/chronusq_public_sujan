@@ -181,6 +181,7 @@ namespace ChronusQ {
     virtual void printMOSpacePartition(std::string label = "");
     void printMCStates();
     virtual void printMCState(std::ostream&,size_t,double,MatsT*,std::vector<size_t>&,size_t,const size_t n_item_per_row = 5);
+    void printMCStateConfigs(std::ostream&,size_t,MatsT*,std::vector<size_t>&,size_t);
     void print1RDMs();
     void printMOInfo(std::ostream&, size_t a = 0);
 
