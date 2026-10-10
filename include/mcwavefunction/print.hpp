@@ -223,11 +223,74 @@ namespace ChronusQ {
       nStrA   = Comb(nCorrO, this->detStr->nElectron());
     }
 
+    // Characterize the active orbitals: Mulliken l-character and <s_z>
+    // (C^dagger S C restricted to each AO / spin block). 4C is skipped.
+    std::vector<std::string> label(nCorrO, "?");
+    std::vector<double> sz(nCorrO, 0.);
+    const bool doLabel = (nC != 4);
+    if( doLabel ) {
+      auto & ref = this->reference();
+      auto & basis = ref.basisSet();
+      const size_t NB  = basis.nBasis;
+      const size_t NBC = nC * NB;
+      const IntsT * S  = ref.aoints_->overlap->pointer();
+      const char lchar[] = "spdfghi";
+
+      std::vector<size_t> bfL(NB, 0);
+      for (size_t iSh = 0; iSh < basis.shells.size(); iSh++)
+        for (size_t k = 0; k < basis.shells[iSh].size(); k++)
+          bfL[basis.mapSh2Bf[iSh] + k] = basis.shells[iSh].contr[0].l;
+      const size_t maxL = *std::max_element(bfL.begin(), bfL.end());
+
+      std::vector<size_t> count(2*(maxL+1), 0);
+      for (auto k = 0ul; k < nCorrO; k++) {
+        const MatsT * Cmo = ref.mo[0].pointer() + (firstAct - 1 + k) * NBC;
+        std::vector<double> popL(maxL+1, 0.);
+        double popS[2] = {0., 0.};
+        for (size_t sp = 0; sp < nC; sp++)
+        for (size_t mu = 0; mu < NB; mu++) {
+          MatsT SC = 0.;
+          for (size_t nu = 0; nu < NB; nu++) SC += S[mu + nu*NB] * Cmo[sp*NB + nu];
+          double p = std::real(std::conj(Cmo[sp*NB + mu]) * SC);
+          popL[bfL[mu]] += p;
+          popS[sp] += p;
+        }
+        size_t lMax = std::max_element(popL.begin(), popL.end()) - popL.begin();
+        size_t spin = 0;
+        std::string sLab = "";
+        if( nC == 2 ) {
+          sz[k] = 0.5 * (popS[0] - popS[1]);
+          spin = popS[0] >= popS[1] ? 0 : 1;
+          sLab = spin == 0 ? "a" : "b";
+        }
+        label[k] = std::string(1, lchar[std::min<size_t>(lMax, 6)])
+                 + std::to_string(++count[2*lMax + spin]) + sLab;
+      }
+
+      if( i == 0 ) {
+        out << std::endl << "  Active " << (nC == 1 ? "orbital" : "spinor")
+            << " characters (Mulliken l-population"
+            << (nC == 2 ? ", spin a/b from <s_z>" : "") << "):" << std::endl;
+        for (auto k = 0ul; k < nCorrO; k++) {
+          out << "    " << std::setw(4) << firstAct + k << "  "
+              << std::left << std::setw(6) << label[k] << std::right;
+          if( nC == 2 )
+            out << "  <s_z> = " << std::fixed << std::setprecision(4)
+                << std::setw(8) << sz[k];
+          out << std::endl;
+        }
+      }
+    }
+
     out << std::endl << "  Leading configurations of state " << i + 1
         << " (active " << (nC == 1 ? "orbitals " : "spinors ") << firstAct
         << " - " << firstAct + nCorrO - 1 << ", left to right):" << std::endl;
     out << "  " << std::setw(6) << "Det" << std::setw(12) << "|C|^2"
-        << std::setw(12) << "Cum." << "   Occupation" << std::endl;
+        << std::setw(12) << "Cum." << "   Occupation";
+    if( nC == 2 and doLabel )
+      out << std::string(std::max<int>(0, int(nCorrO + (nCorrO-1)/10) - 10), ' ')
+          << "     M_S   Holes";
+    out << std::endl;
 
     double cum = 0.;
     for (auto p = 0ul; p < N; p++) {
@@ -252,6 +315,15 @@ namespace ChronusQ {
       for (auto k = 0ul; k < nCorrO; k++) {
         if( k and k % 10 == 0 ) out << ' ';
         out << occ[k];
+      }
+      if( nC == 2 and doLabel ) {
+        // M_S of the determinant and its holes (empty active spinors)
+        double ms = 0.;
+        for (auto k = 0ul; k < nCorrO; k++) if( occ[k] == '1' ) ms += sz[k];
+        out << "  " << std::showpos << std::fixed << std::setprecision(2)
+            << std::setw(6) << ms << std::noshowpos << "   ";
+        for (auto k = 0ul; k < nCorrO; k++)
+          if( occ[k] == '0' ) out << label[k] << " ";
       }
       out << std::endl;
     }
