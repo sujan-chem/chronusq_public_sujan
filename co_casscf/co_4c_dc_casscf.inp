@@ -1,0 +1,43 @@
+#
+#  Co atom : four-component Dirac-Coulomb SA-CASSCF / dyall-v2z
+#  Same active space as the X2C job: CAS(9e, 12 spinors)
+#
+[Molecule]
+charge = 0
+mult = 4
+geom:
+ Co   0.0   0.0   0.0
+
+[QM]
+reference = 4CHF
+job = CI
+
+[BASIS]
+basis = dyall-v2z
+
+[SCF]
+guess = sad
+alg = skip
+
+[INTS]
+alg = direct
+libcint = true
+DC = true
+SSSS = true
+# Gaunt = true      # uncomment for Dirac-Coulomb-Gaunt (more expensive)
+
+[MCSCF]
+JOBTYPE   = CASSCF
+NACTO     = 12
+NACTE     = 9
+NRoots    = 28
+StateAverage = True
+MaxSCFIter   = 200
+SCFEneConv   = 1e-8
+SCFGradConv  = 1e-5
+CIConv       = 1e-8
+MaxCIIter    = 200
+
+[MISC]
+mem  = 16 GB
+nsmp = 8

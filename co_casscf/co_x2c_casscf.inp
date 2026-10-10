@@ -1,0 +1,43 @@
+#
+#  Co atom : X2C (two-component) SA-CASSCF / dyall-v2z
+#  Ground state 3d7 4s2  4F_9/2
+#  Active space: 3d + 4s  -> 6 spatial = 12 spinors, 9 electrons
+#
+[Molecule]
+charge = 0
+mult = 4
+geom:
+ Co   0.0   0.0   0.0
+
+[QM]
+reference = X2CHF
+job = CI
+
+[BASIS]
+basis = dyall-v2z
+
+[SCF]
+# Do NOT try to converge the open-shell 2c-HF (that is what fails).
+# Build orbitals from the SAD guess Fock matrix in one shot and hand
+# them straight to CASSCF, which does the real orbital optimization.
+guess = sad
+alg = skip
+
+[INTS]
+alg = incore
+
+[MCSCF]
+JOBTYPE   = CASSCF
+NACTO     = 12        # spinors (3d x10 + 4s x2)
+NACTE     = 9         # 3d7 4s2
+NRoots    = 28        # all 28 microstates of the 4F term (J = 9/2,7/2,5/2,3/2)
+StateAverage = True   # equal weights -> spherical density, no symmetry breaking
+MaxSCFIter   = 200
+SCFEneConv   = 1e-8
+SCFGradConv  = 1e-5
+CIConv       = 1e-8
+MaxCIIter    = 200
+
+[MISC]
+mem  = 8 GB
+nsmp = 8
